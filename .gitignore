@@ -85,3 +85,6 @@ compile_commands.json
 test/tmp
 test/var
 *.ccls-cache/
+.cache/
+.ccls-cache/
+**/.vscode/

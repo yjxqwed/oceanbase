@@ -1434,3 +1434,13 @@ DEF_TIME(ilog_index_expire_time, OB_CLUSTER_PARAMETER, "7d", "[0s, 60d]",
 DEF_BOOL(_auto_drop_tenant_if_restore_failed, OB_CLUSTER_PARAMETER, "True",
     "auto drop restoring tenant if physical restore fails",
     ObParameterAttr(Section::OBSERVER, Source::DEFAULT, EditLevel::DYNAMIC_EFFECTIVE));
+
+// for testing the major merge to split ranges
+DEF_BOOL(__major_merge_split_new_way, OB_CLUSTER_PARAMETER, "True",
+    "Indicate whether to split ranges in the new way.",
+    ObParameterAttr(Section::OBSERVER, Source::DEFAULT, EditLevel::DYNAMIC_EFFECTIVE));
+
+DEF_INT(major_merge_minimum_row_count_per_task, OB_CLUSTER_PARAMETER, "100000", "[1,]",
+    "The minimum row count for a table to be merged parallelly. "
+    "Invalid number is considered as the default value 100000. Range: [1,+∞)",
+    ObParameterAttr(Section::OBSERVER, Source::DEFAULT, EditLevel::DYNAMIC_EFFECTIVE));
