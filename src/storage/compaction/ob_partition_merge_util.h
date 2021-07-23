@@ -403,6 +403,8 @@ protected:
   blocksstable::ObMacroBlockReader macro_reader_;
   bool need_rewrite_dirty_macro_block_;
   blocksstable::ObStorageFileHandle file_handle_;
+
+  storage::ObMergeType merge_type_;
 };
 
 class ObMinorMergeMacroRowIterator : public ObMacroRowIterator {

@@ -48,6 +48,10 @@ private:
   static const int64_t MIN_PARALLEL_MINI_MINOR_MERGE_THREASHOLD = 2;
   static const int64_t MIN_PARALLEL_MERGE_BLOCKS = 32;
   static const int64_t PARALLEL_MERGE_TARGET_TASK_CNT = 20;
+  // first to split ranges per DEFAULT_ROW_SCAN_GRANULARITY rows according to the inc data
+  static const int64_t DEFAULT_ROW_SCAN_GRANULARITY = 1000000;
+  // first to split ranges per DEFAULT_MACRO_BLOCK_CNT_GRANULARITY blocks according to the base sstable
+  static const int64_t DEFAULT_MACRO_BLOCK_CNT_GRANULARITY = 64;
   // TODO  parallel in ai
   int init_serial_merge();
   int init_parallel_mini_merge(ObSSTableMergeCtx& merge_ctx);
@@ -58,13 +62,24 @@ private:
   int prepare_range_array_for_parallel_major_merge(ObSSTableMergeCtx& merge_ctx);
   // To get ranges w.r.t. the endkeys of macroblocks of the base sstable.
   // If the base sstable contains no data, the <ranges> will contain exactly one range which is the whole range.
-  int get_ranges_by_base_sstable(const int64_t tablet_size, common::ObIArray<common::ObStoreRange>& ranges);
+  int get_ranges_by_base_sstable(common::ObIArray<common::ObStoreRange>& ranges);
   // To get ranges by scan inc data.
   // If no inc data, the <ranges> will contain exactly one range which is the whole range.
-  int get_ranges_by_inc_data(
-      ObSSTableMergeCtx& merge_ctx, common::ObIArray<common::ObStoreRange>& ranges,
-      const common::ObStoreRowkey &start_key);
-
+  int get_ranges_by_inc_data(ObSSTableMergeCtx& merge_ctx, common::ObIArray<common::ObStoreRange>& ranges);
+  // helper functions to init a multiple scan merge (iterator)
+  int prepare_table_access_param(ObSSTableMergeCtx& merge_ctx,
+      common::ObIArray<share::schema::ObColDesc>& rowkey_col_ids,
+      common::ObIArray<share::schema::ObColumnParam *>& out_cols_param,
+      common::ObIArray<int32_t>& out_cols_project, ObTableAccessParam& tbl_xs_param);
+  int prepare_store_ctx(ObSSTableMergeCtx& merge_ctx,
+      memtable::ObIMemtableCtxFactory*& memctx_factory, ObStoreCtx& store_ctx);
+  void revert_store_ctx(memtable::ObIMemtableCtxFactory* memctx_factory, ObStoreCtx& store_ctx);
+  int prepare_table_access_context(ObSSTableMergeCtx& merge_ctx, ObStoreCtx& store_ctx,
+      common::ObQueryFlag& query_flag, blocksstable::ObBlockCacheWorkingSet& blk_cache_ws,
+      ObTableAccessContext& tbl_xs_ctx);
+  int prepare_get_table_param(ObSSTableMergeCtx& merge_ctx,
+      ObTablesHandle& tbls_handle, ObGetTableParam& get_tbl_param);
+    
 private:
   ParallelMergeType parallel_type_;
   common::ObSEArray<common::ObExtStoreRange, 16> range_array_;
@@ -72,6 +87,7 @@ private:
   int64_t concurrent_cnt_;
   common::ObArenaAllocator allocator_;
   bool is_inited_;
+  bool major_merge_range_split_use_new_way_;
 };
 
 }  // namespace storage

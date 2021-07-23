@@ -362,6 +362,7 @@ int ObMacroRowIterator::init(const Param& param, const ObPartitionKey& pg_key)
     micro_block_count_ = -1;
     reuse_micro_block_count_ = -1;
     iter_row_count_ = 0;
+    merge_type_ = param.merge_type_;
 
     // choose micro scanner
     if (table_->is_multi_version_minor_sstable() && is_multi_version_minor_merge) {
@@ -743,7 +744,7 @@ int ObMacroRowIterator::next_range()
       macro_block_opened_ = false;
       choose_merge_level();
 
-      if ((OB_NOT_NULL(multi_version_row_info_) && table_->is_sstable()) || table_->is_major_sstable()) {
+      if ((OB_NOT_NULL(multi_version_row_info_) && table_->is_sstable()) || MAJOR_MERGE == merge_type_) {
         // parallel minor merge need consider the range split
         // parallel minor always use macro block level
         if (merge_range_.get_range().is_whole_range()) {
@@ -760,7 +761,7 @@ int ObMacroRowIterator::next_range()
       }
       if (OB_SUCC(ret) && need_open) {
         // open macro block and next, only use next in base class @attension
-        if (table_->is_major_sstable()) {
+        if (MAJOR_MERGE == merge_type_) {
           curr_merge_level_ = MACRO_BLOCK_MERGE_LEVEL;
         }
         if (OB_FAIL(open_curr_macro_block_())) {
